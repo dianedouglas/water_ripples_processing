@@ -1,42 +1,68 @@
-int cols = 200;
-int rows = 200;
+int cols = 400;
+int rows = 400;
 float[][] current = new float[cols][rows];
 float[][] previous = new float[cols][rows];
-float dampening = .999;
+// like reverb sustain. generally how long it takes for ripples to fade away in this 'puddle'
+// .981 - .99999, more dampening to more sustain.
 
+float dampening = .988;
+//float dampening = .99999;
+int index = 0;
+// set limit to 30, light drizzle. 
+// set limit to 1, downpour
+
+// int limit = 40;
+int limit = 10;
 void setup() {
- size(200, 200);
-//initialize values in each array which hold a color. 
-// at each spot on a grid, rows by columns, there is a value. 
-// if that value is a distance to travel in upwards from that point, height => color of point.
+ size(400, 400);
+}
  
- // initialize buffer values
- //for (int i = 0; i < cols; i++) {
- //  for (int j = 0; j < cols; j++) {
- //    current[i][j] = 100;
- //    previous[i][j] = 100;
- //  }
- //}
- 
- previous[100][100] = 255;
+void mousePressed() {
+  // create raindrop at coordinates mouseX, mouseY
+  // value controls how bright the raindrop is.
+  previous[mouseX][mouseY] = random(50);
+}
+
+void addRainDrops() {
+  int x = int(random(float(cols)));
+  int y = int(random(float(rows)));
+  previous[x][y] = random(50);
 }
 
 void draw() {
   background(0);
   loadPixels();
   
-  for (int i = 1; i < cols - 1; i++){
-    for (int j = 1; j < rows - 1; j++){
+  if (index == 0) {
+    addRainDrops();
+  }
+  index++;
+  if(index == limit) {
+    index = 0;
+  }
+  
+  //go through all pixel coordinates
+  //use current and previous to get next, which is put into current. 
+  //changing offset is almost like zoom and speed at the same time. 
+  //>> need to fill in the pixels arount current out to offset value.
+  int offset = 1;
+  for (int i = offset; i < cols - offset; i++){
+    for (int j = offset; j < rows - offset; j++){
+
       // anything done in here is done to each pixel with access to both buffers 
       // so you can do your math on each pixel here with access to all values in the array. 
       current[i][j] = (
-        previous[i-1][j] +
-        previous[i+1][j] +
-        previous[i][j-1] +
-        previous[i][j+1]
+        previous[i-offset][j] +
+        previous[i+offset][j] +
+        previous[i][j-offset] +
+        previous[i][j+offset]
         ) / 2 - 
         current[i][j];
       current[i][j] = current[i][j] * dampening;
+      
+      // pixels must be native to processing. 
+      // set of all pixels on screen sorted by single index
+      // which means current number of rows (i) + number of columns * current number of columns 
       
       int index = i + j * cols;
       pixels[index] = color(current[i][j] * 255);
